@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>samantha</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:   #f7f3ee;
+  --ink:  #111010;
+  --mid:  #8a857f;
+  --rose: #c9a99a;
+}
+
+html{background:var(--bg)}
+
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Georgia',serif;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ── CURSOR ── */
+#cur{
+  position:fixed;
+  width:8px;height:8px;
+  border:1px solid var(--ink);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .3s,height .3s,background .3s;
+  mix-blend-mode:multiply;
+}
+body.on-dark #cur{border-color:var(--bg);mix-blend-mode:difference}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;
+  z-index:500;
+  padding:28px 44px;
+  display:flex;justify-content:space-between;align-items:center;
+  mix-blend-mode:difference;
+  pointer-events:none;
+}
+nav span{
+  font-family:'Georgia',serif;font-style:italic;
+  font-size:14px;letter-spacing:0.06em;
+  color:#fff;
+}
+nav a{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  color:#fff;text-decoration:none;opacity:0.5;
+  pointer-events:all;transition:opacity .2s;
+}
+nav a:hover{opacity:1}
+
+/* ══════════════════════════════
+   PANEL 01 — full-screen video pin
+══════════════════════════════ */
+.pin-wrap{
+  position:relative;
+  /* tall enough to scroll through */
+  height:300vh;
+}
+
+.pin-inner{
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow:hidden;
+}
+
+.pin-inner video{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:saturate(.75) brightness(.92);
+  transform-origin:center center;
+}
+
+/* vignette */
+.pin-inner::after{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    linear-gradient(to bottom,
+      rgba(17,16,16,.35) 0%,
+      transparent 22%,
+      transparent 65%,
+      rgba(17,16,16,.85) 100%);
+  pointer-events:none;
+}
+
+/* title — wipe in with clip-path, mix-blend difference against raw video */
+.pin-title{
+  position:absolute;
+  left:44px;bottom:52px;
+  z-index:2;
+}
+
+.pin-name{
+  display:block;
+  font-size:clamp(72px,14vw,200px);
+  font-weight:400;font-style:italic;
+  letter-spacing:-0.045em;line-height:.92;
+  color:#fff;
+  mix-blend-mode:difference;
+  clip-path:inset(0 0 105% 0);
+  animation:wipe 1.6s cubic-bezier(.77,0,.18,1) .4s forwards;
+}
+@keyframes wipe{to{clip-path:inset(0 0 -5% 0)}}
+
+.pin-sub{
+  margin-top:16px;
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);
+  opacity:0;animation:show 1s ease 1.4s forwards;
+}
+@keyframes show{to{opacity:1}}
+
+/* progress line — grows as user scrolls through the pin */
+.pin-progress{
+  position:absolute;bottom:0;left:0;
+  height:2px;background:rgba(255,255,255,.25);
+  width:0;
+  z-index:3;
+  transition:width .05s linear;
+}
+
+/* ══════════════════════════════
+   PANEL 02 — intro text (light)
+══════════════════════════════ */
+.text-panel{
+  background:var(--bg);
+  padding:120px 44px 120px;
+}
+
+.text-panel-inner{
+  max-width:640px;
+}
+
+.text-panel p{
+  font-size:clamp(20px,2.8vw,36px);
+  line-height:1.45;letter-spacing:-0.02em;
+  color:var(--ink);margin-bottom:1.5em;
+}
+.text-panel p:last-child{margin-bottom:0}
+.text-panel em{font-style:italic;color:var(--mid)}
+
+/* ══════════════════════════════
+   PANEL 03 — horizontal scroll reel
+══════════════════════════════ */
+.reel-wrap{
+  position:relative;
+  height:250vh; /* scroll distance for horizontal travel */
+}
+
+.reel-sticky{
+  position:sticky;top:0;height:100vh;
+  overflow:hidden;display:flex;align-items:center;
+}
+
+.reel-track{
+  display:flex;gap:24px;
+  padding:0 44px;
+  /* JS moves this */
+  will-change:transform;
+}
+
+.reel-card{
+  flex-shrink:0;
+  height:70vh;
+  position:relative;
+  overflow:hidden;
+}
+
+.reel-card:nth-child(1){width:38vw}
+.reel-card:nth-child(2){width:28vw}
+.reel-card:nth-child(3){width:48vw}
+.reel-card:nth-child(4){width:30vw}
+.reel-card:nth-child(5){width:42vw}
+
+.reel-card video,
+.reel-card .reel-fill{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:saturate(.65) brightness(.88);
+}
+
+/* placeholder panels when no extra video */
+.reel-fill{
+  display:flex;align-items:flex-end;
+  padding:28px 24px;
+}
+
+.reel-fill-1{background:#1a1816}
+.reel-fill-2{background:#e8e2d8}
+.reel-fill-3{background:#2a2622}
+.reel-fill-4{background:#d4cec4}
+
+.reel-label{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+  position:absolute;bottom:24px;left:24px;
+  color:rgba(247,243,238,.4);
+}
+
+.reel-label.dark{color:rgba(17,16,16,.35)}
+
+/* ══════════════════════════════
+   PANEL 04 — dark statement
+══════════════════════════════ */
+.dark-panel{
+  background:var(--ink);
+  color:var(--bg);
+  padding:140px 44px;
+  position:relative;
+  overflow:hidden;
+}
+
+.dark-panel-ghost{
+  position:absolute;
+  font-size:clamp(100px,20vw,300px);
+  font-style:italic;font-weight:400;
+  letter-spacing:-.05em;
+  color:var(--bg);opacity:.04;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;user-select:none;
+  white-space:nowrap;
+}
+
+.dark-panel-inner{
+  position:relative;z-index:1;
+  max-width:580px;
+}
+
+.dark-panel-inner p{
+  font-size:clamp(22px,3vw,42px);
+  line-height:1.4;letter-spacing:-.02em;
+  color:var(--bg);opacity:.85;margin-bottom:1.4em;
+}
+.dark-panel-inner p:last-child{margin-bottom:0}
+.dark-panel-inner em{font-style:italic;opacity:.45}
+
+/* ══════════════════════════════
+   PANEL 05 — video loop, contained
+══════════════════════════════ */
+.loop-panel{
+  background:var(--bg);
+  padding:100px 44px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0 60px;
+  align-items:center;
+}
+
+.loop-video{
+  position:relative;
+  aspect-ratio:9/16;
+  max-height:75vh;
+  overflow:hidden;
+}
+
+.loop-video video{
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:saturate(.6) brightness(.9);
+}
+
+.loop-text{
+  padding:40px 0;
+}
+
+.loop-text .label{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--mid);margin-bottom:28px;display:block;
+}
+
+.loop-text h2{
+  font-size:clamp(28px,3.5vw,52px);
+  font-weight:400;letter-spacing:-.025em;line-height:1.2;
+  margin-bottom:24px;
+}
+
+.loop-text h2 em{font-style:italic;color:var(--mid)}
+
+.loop-text p{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:14px;line-height:1.8;color:var(--mid);
+  max-width:340px;
+}
+
+/* ══════════════════════════════
+   PANEL 06 — marquee
+══════════════════════════════ */
+.marquee{
+  border-top:1px solid rgba(17,16,16,.1);
+  border-bottom:1px solid rgba(17,16,16,.1);
+  overflow:hidden;height:52px;
+  background:var(--bg);
+}
+
+.marquee-track{
+  display:flex;gap:60px;align-items:center;
+  height:100%;width:max-content;
+  animation:scroll 22s linear infinite;
+  white-space:nowrap;
+}
+
+.marquee-track span{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:9px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--mid);
+}
+
+.marquee-track .dot{color:var(--rose)}
+
+@keyframes scroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+/* ══════════════════════════════
+   PANEL 07 — outro
+══════════════════════════════ */
+.outro{
+  background:var(--ink);
+  padding:180px 44px 120px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+
+.outro-ghost{
+  font-size:clamp(80px,18vw,280px);
+  font-style:italic;font-weight:400;
+  letter-spacing:-.05em;
+  color:var(--bg);opacity:.05;
+  user-select:none;pointer-events:none;
+  line-height:.85;
+}
+
+.outro-content{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;
+}
+
+.outro-content span{
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:9px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(247,243,238,.3);
+}
+
+.outro-content a{
+  font-family:'Georgia',serif;font-style:italic;
+  font-size:clamp(20px,2.5vw,36px);
+  color:var(--bg);text-decoration:none;
+  opacity:.5;transition:opacity .25s;
+  letter-spacing:-.01em;
+}
+
+.outro-content a:hover{opacity:1}
+
+/* ── FOOTER ── */
+footer{
+  background:var(--ink);
+  border-top:1px solid rgba(247,243,238,.06);
+  padding:24px 44px;
+  display:flex;justify-content:space-between;
+  font-family:'Helvetica Neue',sans-serif;
+  font-size:9px;letter-spacing:.1em;
+  color:rgba(247,243,238,.18);
+}
+footer a{color:inherit;text-decoration:none}
+footer a:hover{color:rgba(247,243,238,.5)}
+
+/* ── REVEALS ── */
+.r{
+  opacity:0;transform:translateY(20px);
+  transition:opacity 1.1s cubic-bezier(.16,1,.3,1),
+             transform 1.1s cubic-bezier(.16,1,.3,1);
+}
+.r.on{opacity:1;transform:none}
+.d1{transition-delay:.12s}.d2{transition-delay:.26s}.d3{transition-delay:.42s}
+
+/* ── GRAIN ── */
+#grain{
+  position:fixed;inset:0;
+  width:100%;height:100%;
+  z-index:9980;pointer-events:none;
+  opacity:.032;mix-blend-mode:multiply;
+}
+
+@media(max-width:800px){
+  nav{padding:20px 24px}
+  .pin-title{left:24px;bottom:40px}
+  .text-panel{padding:80px 24px}
+  .dark-panel{padding:100px 24px}
+  .loop-panel{grid-template-columns:1fr;padding:80px 24px;gap:40px}
+  .loop-video{max-height:60vw;aspect-ratio:16/9}
+  .outro{padding:120px 24px 80px}
+  footer{padding:18px 24px;flex-direction:column;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="grain"></canvas>
+<div id="cur"></div>
+
+<nav>
+  <span>samantha</span>
+  <a href="#contact">contact</a>
+</nav>
+
+<!-- ── 01 PINNED VIDEO ── -->
+<div class="pin-wrap">
+  <div class="pin-inner" id="pin">
+    <video id="vid" src="hero.mp4" autoplay muted loop playsinline></video>
+    <div class="pin-progress" id="prog"></div>
+    <div class="pin-title">
+      <span class="pin-name">samantha</span>
+      <p class="pin-sub">presence &nbsp;·&nbsp; 2026</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── 02 TEXT ── -->
+<section class="text-panel">
+  <div class="text-panel-inner">
+    <p class="r">There are people who fill a room<br>without raising their voice.</p>
+    <p class="r d1">Samantha is one of them.<br><em>This is her space.</em></p>
+  </div>
+</section>
+
+<!-- ── 03 HORIZONTAL REEL ── -->
+<div class="reel-wrap" id="reel-wrap">
+  <div class="reel-sticky">
+    <div class="reel-track" id="reel-track">
+
+      <div class="reel-card">
+        <video src="hero.mp4" autoplay muted loop playsinline
+               style="filter:saturate(.5) brightness(.85) contrast(1.1)"></video>
+        <span class="reel-label">01</span>
+      </div>
+
+      <div class="reel-card">
+        <div class="reel-fill reel-fill-1">
+          <span class="reel-label">still</span>
+        </div>
+      </div>
+
+      <div class="reel-card">
+        <video src="hero.mp4" autoplay muted loop playsinline
+               style="filter:grayscale(1) brightness(.8);object-position:center 20%"></video>
+        <span class="reel-label">02</span>
+      </div>
+
+      <div class="reel-card">
+        <div class="reel-fill reel-fill-2">
+          <span class="reel-label dark">quiet</span>
+        </div>
+      </div>
+
+      <div class="reel-card">
+        <video src="hero.mp4" autoplay muted loop playsinline
+               style="filter:saturate(.3) sepia(.4) brightness(.9)"></video>
+        <span class="reel-label">03</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── 04 DARK STATEMENT ── -->
+<section class="dark-panel">
+  <div class="dark-panel-ghost">samantha</div>
+  <div class="dark-panel-inner">
+    <p class="r">Presence is not performance.<br><em>It is what remains when the performance stops.</em></p>
+    <p class="r d2">Some things cannot be described.<br>Only felt. Only remembered.</p>
+  </div>
+</section>
+
+<!-- ── 05 LOOP + TEXT ── -->
+<section class="loop-panel">
+  <div class="loop-video r">
+    <video src="hero.mp4" autoplay muted loop playsinline></video>
+  </div>
+  <div class="loop-text r d2">
+    <span class="label">About</span>
+    <h2>Unforced.<br><em>Unfiltered.</em><br>Unforgettable.</h2>
+    <p>
+      Every frame is a decision. Every second of stillness
+      is chosen. This is what intentional presence looks like.
+    </p>
+  </div>
+</section>
+
+<!-- ── 06 MARQUEE ── -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>samantha</span><span class="dot">·</span>
+    <span>presence</span><span class="dot">·</span>
+    <span>2026</span><span class="dot">·</span>
+    <span>unfiltered</span><span class="dot">·</span>
+    <span>samantha</span><span class="dot">·</span>
+    <span>presence</span><span class="dot">·</span>
+    <span>2026</span><span class="dot">·</span>
+    <span>unfiltered</span><span class="dot">·</span>
+  </div>
+</div>
+
+<!-- ── 07 OUTRO ── -->
+<section class="outro" id="contact">
+  <div class="outro-ghost">samantha</div>
+  <div class="outro-content">
+    <span>get in touch</span>
+    <a href="mailto:hello@samantha.world">hello@samantha.world</a>
+  </div>
+</section>
+
+<footer>
+  <span>samantha © 2026</span>
+  <span>all things pass</span>
+  <a href="mailto:hello@samantha.world">hello@samantha.world</a>
+</footer>
+
+<script>
+// ── CURSOR ──
+const cur = document.getElementById('cur')
+let cx = 0, cy = 0, tx = 0, ty = 0
+
+document.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY })
+
+;(function animCur(){
+  cx += (tx - cx) * .14
+  cy += (ty - cy) * .14
+  cur.style.left = cx + 'px'
+  cur.style.top  = cy + 'px'
+  requestAnimationFrame(animCur)
+})()
+
+// ── GRAIN ──
+const gc = document.getElementById('grain')
+const gx = gc.getContext('2d')
+let gf = 0
+function resizeG(){ gc.width = innerWidth; gc.height = innerHeight }
+function tickG(){
+  const w = gc.width, h = gc.height
+  const img = gx.createImageData(w, h), d = img.data, s = gf * 6701
+  for(let i = 0; i < d.length; i += 4){
+    const n = (((i ^ s) * 2654435761) >>> 0) & 0xff
+    d[i]=d[i+1]=d[i+2]=n; d[i+3]=255
+  }
+  gx.putImageData(img, 0, 0); gf++
+  requestAnimationFrame(tickG)
+}
+window.addEventListener('resize', resizeG); resizeG(); tickG()
+
+// ── VIDEO PARALLAX (pinned section) ──
+const vid  = document.getElementById('vid')
+document.addEventListener('mousemove', e => {
+  const px = (e.clientX / innerWidth  - .5) * 14
+  const py = (e.clientY / innerHeight - .5) * 10
+  vid.style.transform = `translate(${px}px,${py}px) scale(1.06)`
+})
+
+// ── PINNED SCROLL PROGRESS BAR ──
+const pinWrap = document.querySelector('.pin-wrap')
+const prog    = document.getElementById('prog')
+
+// ── HORIZONTAL REEL ──
+const reelWrap  = document.getElementById('reel-wrap')
+const reelTrack = document.getElementById('reel-track')
+
+function onScroll(){
+  const wH = innerHeight
+
+  // progress bar
+  const pRect  = pinWrap.getBoundingClientRect()
+  const pTotal = pinWrap.offsetHeight - wH
+  const pDone  = Math.max(0, Math.min(1, -pRect.top / pTotal))
+  prog.style.width = (pDone * 100) + '%'
+
+  // dark sections → invert cursor
+  const dark = document.querySelector('.dark-panel')
+  const dRect = dark.getBoundingClientRect()
+  if(dRect.top < wH && dRect.bottom > 0){
+    document.body.classList.add('on-dark')
+  } else {
+    document.body.classList.remove('on-dark')
+  }
+
+  // horizontal reel
+  const rRect  = reelWrap.getBoundingClientRect()
+  const rTotal = reelWrap.offsetHeight - wH
+  const rProg  = Math.max(0, Math.min(1, -rRect.top / rTotal))
+
+  // total scrollable width = track width minus viewport
+  const trackW    = reelTrack.scrollWidth
+  const maxTravel = trackW - innerWidth + 88 // 88 = 44px padding each side
+  reelTrack.style.transform = `translateX(-${rProg * maxTravel}px)`
+}
+
+window.addEventListener('scroll', onScroll, {passive:true})
+onScroll()
+
+// ── REVEALS ──
+const io = new IntersectionObserver(
+  entries => entries.forEach(e => {
+    if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target) }
+  }),
+  {threshold:.1}
+)
+document.querySelectorAll('.r').forEach(el => io.observe(el))
+</script>
+</body>
+</html>
